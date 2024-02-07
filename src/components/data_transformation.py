@@ -53,8 +53,8 @@ class DataTransformation:
         try:
             train_df = pd.read_csv(train_path)
             test_df = pd.read_csv(test_path)
-            train_df.drop("LoanID", axis = 1, inplace = True)
-            test_df.drop("LoanID", axis = 1, inplace = True)
+            #train_df.drop("LoanID", axis = 1, inplace = True)
+            #test_df.drop("LoanID", axis = 1, inplace = True)
             
             preprocessor = self.get_data_transformer()
             logging.info("Preprocessor object obtained")

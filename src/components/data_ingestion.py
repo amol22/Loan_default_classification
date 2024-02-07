@@ -3,8 +3,10 @@ import sys
 from src.exception import CustomException
 from src.logger import logging
 import pandas as pd
+from imblearn.over_sampling import SMOTENC
 from config import DataIngestionConfig, DataTransformationConfig
 from src.components.data_transformation import DataTransformation
+from src.components.model_training import ModelTrainer
 
 from sklearn.model_selection import train_test_split
 
@@ -20,12 +22,15 @@ class DataIngestion:
             df = pd.read_csv("data/Loan_default.csv")
             
             os.makedirs(os.path.dirname(self.ingestion_config.raw_data_path), exist_ok  = True)
-            df.to_csv(self.ingestion_config.raw_data_path, index = False, header = True)
+            #df.to_csv(self.ingestion_config.raw_data_path, index = False, header = True)
             
             logging.info("Train-test split initiated")
+            df.drop("LoanID", axis = 1, inplace = True)
             X = df.drop("Default", axis = 1)
             y = df["Default"]
-            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 22, stratify= y)
+            smote = SMOTENC(categorical_features=[9,10,11,12,13,14,15], sampling_strategy="minority")
+            X_sm, y_sm = smote.fit_resample(X,y)
+            X_train, X_test, y_train, y_test = train_test_split(X_sm, y_sm, test_size = 0.2, random_state = 22, stratify= y_sm)
             train_set = pd.concat([X_train,y_train], axis=1)
             test_set = pd.concat([X_test,y_test], axis=1)
             train_set.to_csv(self.ingestion_config.train_data_path, index = False, header = True)
@@ -44,4 +49,6 @@ if __name__=="__main__":
     obj = DataIngestion()
     train_path,test_path = obj.data_ingestion()
     data_transform = DataTransformation()
-    data_transform.initiate_data_transformation(train_path,test_path)
+    train_arr,test_arr = data_transform.initiate_data_transformation(train_path,test_path)
+    model = ModelTrainer()
+    model.initiate_model_trainer(train_arr,test_arr)
